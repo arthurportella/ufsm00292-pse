@@ -16,6 +16,7 @@
 /* codigos de retorno */
 #define BC_OK               0
 #define BC_ERRO_PARAMETRO  -1
+#define BC_ERRO_VAZIO      -3
 
 typedef struct
 {
@@ -27,5 +28,9 @@ typedef struct
 
 int bc_inicializa(buffer_circular_t *b, uint8_t *area, size_t tamanho);
 int bc_vazio(const buffer_circular_t *b);
+int bc_cheio(const buffer_circular_t *b);
+size_t bc_capacidade(const buffer_circular_t *b);
+size_t bc_ocupacao(const buffer_circular_t *b);
+int bc_le(buffer_circular_t *b, uint8_t *dado);
 
 #endif /* BUFFER_CIRCULAR_H */

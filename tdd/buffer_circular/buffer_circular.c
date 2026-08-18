@@ -20,3 +20,32 @@ int bc_vazio(const buffer_circular_t *b)
 {
     return (b->contador == 0);
 }
+
+int bc_cheio(const buffer_circular_t *b)
+{
+    return (b->contador == b->tamanho);
+}
+
+size_t bc_capacidade(const buffer_circular_t *b)
+{
+    return b->tamanho;
+}
+
+size_t bc_ocupacao(const buffer_circular_t *b)
+{
+    return b->contador;
+}
+
+int bc_le(buffer_circular_t *b, uint8_t *dado)
+{
+    if (bc_vazio(b))
+    {
+        return BC_ERRO_VAZIO;
+    }
+
+    *dado = b->dados[b->inicio];
+    b->inicio = (b->inicio + 1) % b->tamanho;
+    b->contador--;
+
+    return BC_OK;
+}
