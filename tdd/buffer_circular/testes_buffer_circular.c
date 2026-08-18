@@ -393,6 +393,64 @@ static char *teste_buffer_de_uma_posicao(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Ciclo 7 - robustez contra parametros invalidos                      */
+/* ------------------------------------------------------------------ */
+
+static char *teste_inicializa_rejeita_parametros_invalidos(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+
+    verifica("erro: bc_inicializa() deveria rejeitar buffer nulo",
+             bc_inicializa(NULL, area, sizeof(area)) == BC_ERRO_PARAMETRO);
+    verifica("erro: bc_inicializa() deveria rejeitar area nula",
+             bc_inicializa(&b, NULL, sizeof(area)) == BC_ERRO_PARAMETRO);
+    verifica("erro: bc_inicializa() deveria rejeitar tamanho zero",
+             bc_inicializa(&b, area, 0) == BC_ERRO_PARAMETRO);
+    return 0;
+}
+
+static char *teste_escreve_rejeita_buffer_nulo(void)
+{
+    verifica("erro: bc_escreve() deveria rejeitar buffer nulo",
+             bc_escreve(NULL, 1) == BC_ERRO_PARAMETRO);
+    return 0;
+}
+
+static char *teste_le_rejeita_parametros_nulos(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+    uint8_t dado = 0;
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 1);
+
+    verifica("erro: bc_le() deveria rejeitar buffer nulo",
+             bc_le(NULL, &dado) == BC_ERRO_PARAMETRO);
+    verifica("erro: bc_le() deveria rejeitar destino nulo",
+             bc_le(&b, NULL) == BC_ERRO_PARAMETRO);
+    verifica("erro: as chamadas invalidas nao deveriam consumir dados",
+             bc_ocupacao(&b) == 1);
+    return 0;
+}
+
+static char *teste_consultas_com_buffer_nulo(void)
+{
+    verifica("erro: bc_vazio(NULL) deveria retornar 1 (nada a ler)",
+             bc_vazio(NULL) == 1);
+    verifica("erro: bc_cheio(NULL) deveria retornar 1 (nada pode ser escrito)",
+             bc_cheio(NULL) == 1);
+    verifica("erro: bc_ocupacao(NULL) deveria retornar 0",
+             bc_ocupacao(NULL) == 0);
+    verifica("erro: bc_capacidade(NULL) deveria retornar 0",
+             bc_capacidade(NULL) == 0);
+    verifica("erro: bc_limpa(NULL) deveria retornar BC_ERRO_PARAMETRO",
+             bc_limpa(NULL) == BC_ERRO_PARAMETRO);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
 
 static char *executa_testes(void)
 {
@@ -426,6 +484,12 @@ static char *executa_testes(void)
     executa_teste(teste_limpa_esvazia_o_buffer);
     executa_teste(teste_buffer_utilizavel_apos_limpa);
     executa_teste(teste_buffer_de_uma_posicao);
+
+    /* ciclo 7 */
+    executa_teste(teste_inicializa_rejeita_parametros_invalidos);
+    executa_teste(teste_escreve_rejeita_buffer_nulo);
+    executa_teste(teste_le_rejeita_parametros_nulos);
+    executa_teste(teste_consultas_com_buffer_nulo);
 
     return 0;
 }
