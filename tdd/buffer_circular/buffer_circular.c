@@ -52,7 +52,14 @@ int bc_le(buffer_circular_t *b, uint8_t *dado)
 
 int bc_escreve(buffer_circular_t *b, uint8_t dado)
 {
-    size_t fim = (b->inicio + b->contador) % b->tamanho;
+    size_t fim;
+
+    if (bc_cheio(b))
+    {
+        return BC_ERRO_CHEIO;
+    }
+
+    fim = (b->inicio + b->contador) % b->tamanho;
 
     b->dados[fim] = dado;
     b->contador++;

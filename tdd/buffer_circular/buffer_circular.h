@@ -16,6 +16,7 @@
 /* codigos de retorno */
 #define BC_OK               0
 #define BC_ERRO_PARAMETRO  -1
+#define BC_ERRO_CHEIO      -2
 #define BC_ERRO_VAZIO      -3
 
 typedef struct

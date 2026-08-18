@@ -198,6 +198,71 @@ static char *teste_apos_ler_tudo_buffer_fica_vazio(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Ciclo 4 - buffer cheio e protecao contra estouro                    */
+/* ------------------------------------------------------------------ */
+
+static char *teste_buffer_fica_cheio_na_capacidade(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+    int i;
+
+    bc_inicializa(&b, area, sizeof(area));
+    for (i = 0; i < 4; i++)
+    {
+        bc_escreve(&b, (uint8_t)i);
+    }
+
+    verifica("erro: apos escrever 4 dados em area de 4 bytes o buffer deveria estar cheio",
+             bc_cheio(&b) == 1);
+    verifica("erro: buffer cheio deveria ter ocupacao igual a capacidade",
+             bc_ocupacao(&b) == bc_capacidade(&b));
+    return 0;
+}
+
+static char *teste_escreve_em_buffer_cheio_retorna_erro(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+    int i;
+
+    bc_inicializa(&b, area, sizeof(area));
+    for (i = 0; i < 4; i++)
+    {
+        bc_escreve(&b, (uint8_t)i);
+    }
+
+    verifica("erro: escrever em buffer cheio deveria retornar BC_ERRO_CHEIO",
+             bc_escreve(&b, 0xFF) == BC_ERRO_CHEIO);
+    verifica("erro: escrita rejeitada nao deveria alterar a ocupacao",
+             bc_ocupacao(&b) == 4);
+    return 0;
+}
+
+static char *teste_buffer_cheio_nao_sobrescreve_dados(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+    uint8_t dado = 0;
+    int i;
+
+    bc_inicializa(&b, area, sizeof(area));
+    for (i = 0; i < 4; i++)
+    {
+        bc_escreve(&b, (uint8_t)(i + 1));
+    }
+    bc_escreve(&b, 0xFF);   /* rejeitada */
+
+    for (i = 0; i < 4; i++)
+    {
+        bc_le(&b, &dado);
+        verifica("erro: a escrita rejeitada corrompeu os dados armazenados",
+                 dado == (uint8_t)(i + 1));
+    }
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
 
 static char *executa_testes(void)
 {
@@ -217,6 +282,11 @@ static char *executa_testes(void)
     executa_teste(teste_le_o_dado_escrito);
     executa_teste(teste_ordem_fifo);
     executa_teste(teste_apos_ler_tudo_buffer_fica_vazio);
+
+    /* ciclo 4 */
+    executa_teste(teste_buffer_fica_cheio_na_capacidade);
+    executa_teste(teste_escreve_em_buffer_cheio_retorna_erro);
+    executa_teste(teste_buffer_cheio_nao_sobrescreve_dados);
 
     return 0;
 }
