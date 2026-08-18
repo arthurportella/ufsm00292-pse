@@ -330,6 +330,69 @@ static char *teste_uso_continuo_por_varias_voltas(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Ciclo 6 - descarte do conteudo e casos limite                       */
+/* ------------------------------------------------------------------ */
+
+static char *teste_limpa_esvazia_o_buffer(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 1);
+    bc_escreve(&b, 2);
+
+    verifica("erro: bc_limpa() deveria retornar BC_OK",
+             bc_limpa(&b) == BC_OK);
+    verifica("erro: apos bc_limpa() o buffer deveria estar vazio",
+             bc_vazio(&b) == 1);
+    verifica("erro: apos bc_limpa() a ocupacao deveria ser 0",
+             bc_ocupacao(&b) == 0);
+    return 0;
+}
+
+static char *teste_buffer_utilizavel_apos_limpa(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+    uint8_t dado = 0;
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 1);
+    bc_limpa(&b);
+
+    verifica("erro: deveria ser possivel escrever apos bc_limpa()",
+             bc_escreve(&b, 9) == BC_OK);
+    bc_le(&b, &dado);
+    verifica("erro: o dado lido apos bc_limpa() deveria ser 9", dado == 9);
+    return 0;
+}
+
+static char *teste_buffer_de_uma_posicao(void)
+{
+    buffer_circular_t b;
+    uint8_t area[1];
+    uint8_t dado = 0;
+
+    bc_inicializa(&b, area, sizeof(area));
+    verifica("erro: buffer de 1 posicao deveria aceitar uma escrita",
+             bc_escreve(&b, 7) == BC_OK);
+    verifica("erro: buffer de 1 posicao deveria ficar cheio com um dado",
+             bc_cheio(&b) == 1);
+    verifica("erro: buffer de 1 posicao nao deveria aceitar a segunda escrita",
+             bc_escreve(&b, 8) == BC_ERRO_CHEIO);
+
+    bc_le(&b, &dado);
+    verifica("erro: o dado lido do buffer de 1 posicao deveria ser 7",
+             dado == 7);
+    verifica("erro: buffer de 1 posicao deveria ficar vazio apos a leitura",
+             bc_vazio(&b) == 1);
+    verifica("erro: buffer de 1 posicao deveria aceitar nova escrita apos a leitura",
+             bc_escreve(&b, 8) == BC_OK);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
 
 static char *executa_testes(void)
 {
@@ -358,6 +421,11 @@ static char *executa_testes(void)
     /* ciclo 5 */
     executa_teste(teste_indices_dao_a_volta);
     executa_teste(teste_uso_continuo_por_varias_voltas);
+
+    /* ciclo 6 */
+    executa_teste(teste_limpa_esvazia_o_buffer);
+    executa_teste(teste_buffer_utilizavel_apos_limpa);
+    executa_teste(teste_buffer_de_uma_posicao);
 
     return 0;
 }

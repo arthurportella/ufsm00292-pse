@@ -66,3 +66,11 @@ int bc_escreve(buffer_circular_t *b, uint8_t dado)
 
     return BC_OK;
 }
+
+int bc_limpa(buffer_circular_t *b)
+{
+    b->inicio = 0;
+    b->contador = 0;
+
+    return BC_OK;
+}
