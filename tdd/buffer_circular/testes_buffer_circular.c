@@ -263,6 +263,73 @@ static char *teste_buffer_cheio_nao_sobrescreve_dados(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Ciclo 5 - comportamento circular (wrap-around)                      */
+/* ------------------------------------------------------------------ */
+
+static char *teste_indices_dao_a_volta(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+    uint8_t dado = 0;
+    int i;
+
+    bc_inicializa(&b, area, sizeof(area));
+
+    /* enche o buffer */
+    for (i = 1; i <= 4; i++)
+    {
+        bc_escreve(&b, (uint8_t)i);
+    }
+
+    /* libera duas posicoes no inicio da area */
+    bc_le(&b, &dado);
+    bc_le(&b, &dado);
+
+    /* estas duas escritas devem dar a volta e ocupar area[0] e area[1] */
+    verifica("erro: deveria ser possivel escrever apos liberar espaco",
+             bc_escreve(&b, 5) == BC_OK);
+    verifica("erro: deveria ser possivel escrever apos liberar espaco",
+             bc_escreve(&b, 6) == BC_OK);
+    verifica("erro: apos dar a volta o buffer deveria estar cheio novamente",
+             bc_cheio(&b) == 1);
+
+    /* a ordem FIFO deve ser mantida atraves da volta */
+    for (i = 3; i <= 6; i++)
+    {
+        bc_le(&b, &dado);
+        verifica("erro: a ordem FIFO nao foi mantida apos o wrap-around",
+                 dado == (uint8_t)i);
+    }
+    verifica("erro: o buffer deveria estar vazio ao final do teste",
+             bc_vazio(&b) == 1);
+    return 0;
+}
+
+static char *teste_uso_continuo_por_varias_voltas(void)
+{
+    buffer_circular_t b;
+    uint8_t area[4];
+    uint8_t dado = 0;
+    int i;
+
+    bc_inicializa(&b, area, sizeof(area));
+
+    /* 100 escritas/leituras intercaladas: os indices dao varias voltas */
+    for (i = 0; i < 100; i++)
+    {
+        verifica("erro: escrita falhou durante o uso continuo",
+                 bc_escreve(&b, (uint8_t)i) == BC_OK);
+        verifica("erro: leitura falhou durante o uso continuo",
+                 bc_le(&b, &dado) == BC_OK);
+        verifica("erro: o dado lido nao corresponde ao escrito no uso continuo",
+                 dado == (uint8_t)i);
+    }
+    verifica("erro: o buffer deveria estar vazio ao final do uso continuo",
+             bc_vazio(&b) == 1);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
 
 static char *executa_testes(void)
 {
@@ -287,6 +354,10 @@ static char *executa_testes(void)
     executa_teste(teste_buffer_fica_cheio_na_capacidade);
     executa_teste(teste_escreve_em_buffer_cheio_retorna_erro);
     executa_teste(teste_buffer_cheio_nao_sobrescreve_dados);
+
+    /* ciclo 5 */
+    executa_teste(teste_indices_dao_a_volta);
+    executa_teste(teste_uso_continuo_por_varias_voltas);
 
     return 0;
 }
