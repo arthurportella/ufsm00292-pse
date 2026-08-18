@@ -115,6 +115,89 @@ static char *teste_le_buffer_vazio_retorna_erro(void)
 }
 
 /* ------------------------------------------------------------------ */
+/* Ciclo 3 - escrita, leitura do dado e ordem FIFO                     */
+/* ------------------------------------------------------------------ */
+
+static char *teste_escreve_retorna_ok(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+
+    bc_inicializa(&b, area, sizeof(area));
+    verifica("erro: bc_escreve() deveria retornar BC_OK",
+             bc_escreve(&b, 0x55) == BC_OK);
+    return 0;
+}
+
+static char *teste_apos_escrever_buffer_nao_esta_vazio(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 0x55);
+    verifica("erro: apos escrever, o buffer nao deveria estar vazio",
+             bc_vazio(&b) == 0);
+    verifica("erro: apos escrever um dado, a ocupacao deveria ser 1",
+             bc_ocupacao(&b) == 1);
+    return 0;
+}
+
+static char *teste_le_o_dado_escrito(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+    uint8_t dado = 0;
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 0x55);
+    verifica("erro: bc_le() deveria retornar BC_OK",
+             bc_le(&b, &dado) == BC_OK);
+    verifica("erro: bc_le() deveria devolver o dado escrito (0x55)",
+             dado == 0x55);
+    return 0;
+}
+
+static char *teste_ordem_fifo(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+    uint8_t dado = 0;
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 1);
+    bc_escreve(&b, 2);
+    bc_escreve(&b, 3);
+
+    bc_le(&b, &dado);
+    verifica("erro: o primeiro dado lido deveria ser 1", dado == 1);
+    bc_le(&b, &dado);
+    verifica("erro: o segundo dado lido deveria ser 2", dado == 2);
+    bc_le(&b, &dado);
+    verifica("erro: o terceiro dado lido deveria ser 3", dado == 3);
+    return 0;
+}
+
+static char *teste_apos_ler_tudo_buffer_fica_vazio(void)
+{
+    buffer_circular_t b;
+    uint8_t area[8];
+    uint8_t dado = 0;
+
+    bc_inicializa(&b, area, sizeof(area));
+    bc_escreve(&b, 1);
+    bc_escreve(&b, 2);
+    bc_le(&b, &dado);
+    bc_le(&b, &dado);
+
+    verifica("erro: apos ler todos os dados o buffer deveria estar vazio",
+             bc_vazio(&b) == 1);
+    verifica("erro: apos ler todos os dados a ocupacao deveria ser 0",
+             bc_ocupacao(&b) == 0);
+    return 0;
+}
+
+/* ------------------------------------------------------------------ */
 
 static char *executa_testes(void)
 {
@@ -127,6 +210,13 @@ static char *executa_testes(void)
     executa_teste(teste_capacidade_eh_o_tamanho_informado);
     executa_teste(teste_ocupacao_inicial_eh_zero);
     executa_teste(teste_le_buffer_vazio_retorna_erro);
+
+    /* ciclo 3 */
+    executa_teste(teste_escreve_retorna_ok);
+    executa_teste(teste_apos_escrever_buffer_nao_esta_vazio);
+    executa_teste(teste_le_o_dado_escrito);
+    executa_teste(teste_ordem_fifo);
+    executa_teste(teste_apos_ler_tudo_buffer_fica_vazio);
 
     return 0;
 }

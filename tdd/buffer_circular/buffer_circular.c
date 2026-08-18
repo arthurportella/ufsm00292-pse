@@ -49,3 +49,13 @@ int bc_le(buffer_circular_t *b, uint8_t *dado)
 
     return BC_OK;
 }
+
+int bc_escreve(buffer_circular_t *b, uint8_t dado)
+{
+    size_t fim = (b->inicio + b->contador) % b->tamanho;
+
+    b->dados[fim] = dado;
+    b->contador++;
+
+    return BC_OK;
+}
