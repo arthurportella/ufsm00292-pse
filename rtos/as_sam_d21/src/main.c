@@ -41,6 +41,7 @@ void tarefa_6(void);
 void tarefa_7(void);
 void tarefa_8(void);
 void tarefa_9(void);
+void tarefa_periodica(void);
 
 /*
  * Configuracao dos tamanhos das pilhas
@@ -54,6 +55,7 @@ void tarefa_9(void);
 #define TAM_PILHA_7			(TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_8			(TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_9			(TAM_MINIMO_PILHA + 24)
+#define TAM_PILHA_PERIODICA	(TAM_MINIMO_PILHA + 24)
 #define TAM_PILHA_OCIOSA	(TAM_MINIMO_PILHA + 24)
 
 /*
@@ -68,6 +70,7 @@ uint32_t PILHA_TAREFA_6[TAM_PILHA_6];
 uint32_t PILHA_TAREFA_7[TAM_PILHA_7];
 uint32_t PILHA_TAREFA_8[TAM_PILHA_8];
 uint32_t PILHA_TAREFA_9[TAM_PILHA_9];
+uint32_t PILHA_TAREFA_PERIODICA[TAM_PILHA_PERIODICA];
 uint32_t PILHA_TAREFA_OCIOSA[TAM_PILHA_OCIOSA];
 
 /*
@@ -89,6 +92,9 @@ int main(void)
 
 	/* Tarefa criada no exercicio 01 de RTOS (atv5) */
 	CriaTarefa(tarefa_9, "Tarefa 9", PILHA_TAREFA_9, TAM_PILHA_9, 3);
+
+	/* Tarefa periodica de 100 ms criada no exercicio 02 de RTOS (atv6) */
+	CriaTarefa(tarefa_periodica, "Tarefa periodica", PILHA_TAREFA_PERIODICA, TAM_PILHA_PERIODICA, 4);
 	
 	/* Cria tarefa ociosa do sistema */
 	CriaTarefa(tarefa_ociosa,"Tarefa ociosa", PILHA_TAREFA_OCIOSA, TAM_PILHA_OCIOSA, 0);
@@ -266,12 +272,30 @@ void tarefa_9(void)
 	{
 		contador++;
 
-		/* Liga LED. */
-		port_pin_set_output_level(LED_0_PIN, LED_0_ACTIVE);
+		/* LED cedido para a tarefa periodica de 100 ms (atv6) */
 		TarefaEspera(500);
+	}
+}
 
-		/* Desliga LED. */
-		port_pin_set_output_level(LED_0_PIN, !LED_0_ACTIVE);
-		TarefaEspera(500);
+/* Tarefa periodica criada no exercicio 02 de RTOS (atv6).
+ * Executa a cada 100 marcas de tempo, e como cfg_MARCA_TEMPO_HZ vale 1000
+ * cada marca dura 1 ms, entao o periodo e de 100 ms.
+ *
+ * Roda igual nos dois modos de escalonamento; o que muda e o instante em que
+ * a tarefa volta a executar depois que o tempo de espera acaba. Selecione o
+ * modo pela macro MODO_PREEMPTIVO em rtos.h. */
+void tarefa_periodica(void)
+{
+	volatile uint32_t ciclos = 0;
+
+	for(;;)
+	{
+		ciclos++;
+
+		/* Inverte o LED a cada execucao: o LED pisca a 5 Hz (100 ms ligado,
+		 * 100 ms desligado), o que permite medir o periodo no osciloscopio. */
+		port_pin_toggle_output_level(LED_0_PIN);
+
+		TarefaEspera(100);	/* 100 marcas de tempo = 100 ms */
 	}
 }
